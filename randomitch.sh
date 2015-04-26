@@ -2,13 +2,13 @@
 #
 # randomitch.sh
 #
-#Authors:
+# Terrible Coding done by:
 #
 #   DragonStuff @DragonStuff
 #
 
 ####  CONSTANTS  ####
-USAGE="Usage: ./randomitch.sh [-q] [genre] [browser]"
+USAGE="Usage: ./randomitch.sh [-q] [genre] [browser]\n  Standard Genres: XML_Free_Page/XML_Newest_Page/XML_Featured_Page/\n  Specific Genres: XML_Action_Page/XML_Platformer_Page/XML_Shooter_Page/XML_Adventure_Page/XML_RPG_Page/XML_Simulation_Page/XML_Strategy_Page/XML_Other_Page/XML_Puzzle_Page\n"
 
 ####    FLAGS    ####
 #All flags are = 0 for on
@@ -16,23 +16,23 @@ USAGE="Usage: ./randomitch.sh [-q] [genre] [browser]"
 QUIET=1
 
 #### GLOBAL VARS ####
-XML_Free_Page = "http://itch.io/games/price-free.xml"
-XML_Newest_Page = "http://itch.io/games/newest/price-free.xml"
-XML_Featured_Page = "http://itch.io/feed/featured/price-free.xml"
+echo XML_Free_Page="http://itch.io/games/price-free.xml" > types.txt
+echo XML_Newest_Page="http://itch.io/games/newest/price-free.xml" >> types.txt
+echo XML_Featured_Page="http://itch.io/feed/featured/price-free.xml" >> types.txt
 
 # Genres
-XML_Action_Page = "http://itch.io/games/genre-action/price-free.xml"
-XML_Platformer_Page = "http://itch.io/games/genre-platformer/price-free.xml"
-XML_Shooter_Page = "http://itch.io/games/genre-shooter/price-free.xml"
-XML_Adventure_Page = "http://itch.io/games/genre-adventure/price-free.xml"
-XML_RPG_Page = "http://itch.io/games/genre-rpg/price-free.xml"
-XML_Simulation_Page = "http://itch.io/games/genre-simulation/price-free.xml"
-XML_Strategy_Page = "http://itch.io/games/genre-strategy/price-free.xml"
-XML_Other_Page = "http://itch.io/games/genre-other/price-free.xml"
-XML_Puzzle_Page = "http://itch.io/games/genre-puzzle/price-free.xml"
+echo XML_Action_Page="http://itch.io/games/genre-action/price-free.xml" >> types.txt
+echo XML_Platformer_Page="http://itch.io/games/genre-platformer/price-free.xml" >> types.txt
+echo XML_Shooter_Page="http://itch.io/games/genre-shooter/price-free.xml" >> types.txt
+echo XML_Adventure_Page="http://itch.io/games/genre-adventure/price-free.xml" >> types.txt
+echo XML_RPG_Page="http://itch.io/games/genre-rpg/price-free.xml" >> types.txt
+echo XML_Simulation_Page="http://itch.io/games/genre-simulation/price-free.xml" >> types.txt
+echo XML_Strategy_Page="http://itch.io/games/genre-strategy/price-free.xml" >> types.txt
+echo XML_Other_Page="http://itch.io/games/genre-other/price-free.xml" >> types.txt
+echo XML_Puzzle_Page="http://itch.io/games/genre-puzzle/price-free.xml" >> types.txt
 
 # Browser Variable to Global
-Browser = $2
+Browser=$2
 
 ####  FUNCTIONS  ####
 
@@ -78,30 +78,37 @@ function echosucc {
 #        $2 Browser
 
 function randomGame() {
-  local f = $1
-  wget $f
+  local f=$1
+  rm -f database_raw.txt
+  wget -q -O database_raw.txt $(cat types.txt | grep $f | sed "s/^$f\=//")
+
 
   # XML Prettifier - Works perfectly!
-  FILE_SIZE=$(du -k database.txt | cut -f1)
-  TMPNAME=$(basename $0)-$(basename database.txt)
+  FILE_SIZE=$(du -k database_raw.txt | cut -f1)
+  TMPNAME=$(basename $0)-$(basename database_raw.txt)
   TMPFILE=$(mktemp $TMPNAME.XXX) || exit 1
 
   echo "Prettifying itch.io's API: $INPUT_FILE ($FILE_SIZE Kbytes)..."
-  xmllint --format database.txt --output $TMPFILE
-  mv $TMPFILE database.txt
+  xmllint --format database_raw.txt --output $TMPFILE
+  mv $TMPFILE database_raw.txt
 
+  # Now replace the database with links
+  cat database_raw.txt | grep "<link>" | sed 's|</b>|-|g' | sed 's|<[^>]*>||g' > database_parsed.txt
+
+  # Remove first line as it is a link of the actual page:
+  tail -n +2 "database_parsed.txt"
   # It appears that the XML pages display 30 games, so let's generate a random number less than or equal to this.
-  elementNumber = $(( r %= 30 ))
-
+  elementNumber=$(shuf -i 1-30 -n 1)
   # Now grab the Game($elementNumber)
-
+  gameID=$(awk "NR==$elementNumber" database_parsed.txt)
   # Then call openGameInBrowser(url)
-  openGameInBrowser($url);
+  # openGameInBrowser($url);
+  echo -e YOUR GAME IS: $gameID
 }
 
 function openGameInBrowser() {
   # TODO (DragonStuff): Check whether the site is actually operating or not. Whatever.
-  local f = $1
+  local f=$1
   # Check for existance of browser and open the game
   command -v $Browser >/dev/null && $Browser $f || echo "Browser: $Browser not found."
 }
@@ -125,10 +132,10 @@ function main {
     shift $(($OPTIND - 1))
     #no args after flags, present usage message
     if [[ ${#@} = 0 ]]; then
-        echoerr ${USAGE}
+        echo -e ${USAGE}
         exit 1
     fi
-    randomGame($1);
+    randomGame $1
 }
 
 main "${@}"
