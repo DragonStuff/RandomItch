@@ -79,13 +79,24 @@ function echosucc {
 
 function randomGame() {
   local f = $1
+  wget $f
+
+  # XML Prettifier - Works perfectly!
+  FILE_SIZE=$(du -k database.txt | cut -f1)
+  TMPNAME=$(basename $0)-$(basename database.txt)
+  TMPFILE=$(mktemp $TMPNAME.XXX) || exit 1
+
+  echo "Prettifying itch.io's API: $INPUT_FILE ($FILE_SIZE Kbytes)..."
+  xmllint --format database.txt --output $TMPFILE
+  mv $TMPFILE database.txt
+
   # It appears that the XML pages display 30 games, so let's generate a random number less than or equal to this.
   elementNumber = $(( r %= 30 ))
 
   # Now grab the Game($elementNumber)
-  
-  # Then call openGameInBrowser(url)
 
+  # Then call openGameInBrowser(url)
+  openGameInBrowser($url);
 }
 
 function openGameInBrowser() {
