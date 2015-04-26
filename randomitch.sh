@@ -8,7 +8,7 @@
 #
 
 ####  CONSTANTS  ####
-USAGE="Usage: ./randomitch.sh [-q] [genre] [browser]\n  Standard Genres: XML_Free_Page/XML_Newest_Page/XML_Featured_Page/\n  Specific Genres: XML_Action_Page/XML_Platformer_Page/XML_Shooter_Page/XML_Adventure_Page/XML_RPG_Page/XML_Simulation_Page/XML_Strategy_Page/XML_Other_Page/XML_Puzzle_Page\n"
+USAGE="Usage: ./randomitch.sh [-q] [genre] [browser]\n  Standard Genres: Free/Newest/Featured/\n  Specific Genres: Action/Platformer/Shooter/Adventure/RPG/Simulation/Strategy/Other/Puzzle\n"
 
 ####    FLAGS    ####
 #All flags are = 0 for on
@@ -16,20 +16,19 @@ USAGE="Usage: ./randomitch.sh [-q] [genre] [browser]\n  Standard Genres: XML_Fre
 QUIET=1
 
 #### GLOBAL VARS ####
-echo XML_Free_Page="http://itch.io/games/price-free.xml" > types.txt
-echo XML_Newest_Page="http://itch.io/games/newest/price-free.xml" >> types.txt
-echo XML_Featured_Page="http://itch.io/feed/featured/price-free.xml" >> types.txt
+echo Free="http://itch.io/games/price-free.xml" > types.txt
+echo Newest="http://itch.io/games/newest/price-free.xml" >> types.txt
 
 # Genres
-echo XML_Action_Page="http://itch.io/games/genre-action/price-free.xml" >> types.txt
-echo XML_Platformer_Page="http://itch.io/games/genre-platformer/price-free.xml" >> types.txt
-echo XML_Shooter_Page="http://itch.io/games/genre-shooter/price-free.xml" >> types.txt
-echo XML_Adventure_Page="http://itch.io/games/genre-adventure/price-free.xml" >> types.txt
-echo XML_RPG_Page="http://itch.io/games/genre-rpg/price-free.xml" >> types.txt
-echo XML_Simulation_Page="http://itch.io/games/genre-simulation/price-free.xml" >> types.txt
-echo XML_Strategy_Page="http://itch.io/games/genre-strategy/price-free.xml" >> types.txt
-echo XML_Other_Page="http://itch.io/games/genre-other/price-free.xml" >> types.txt
-echo XML_Puzzle_Page="http://itch.io/games/genre-puzzle/price-free.xml" >> types.txt
+echo Action="http://itch.io/games/genre-action/price-free.xml" >> types.txt
+echo Platformer="http://itch.io/games/genre-platformer/price-free.xml" >> types.txt
+echo Shooter="http://itch.io/games/genre-shooter/price-free.xml" >> types.txt
+echo Adventure="http://itch.io/games/genre-adventure/price-free.xml" >> types.txt
+echo RPG="http://itch.io/games/genre-rpg/price-free.xml" >> types.txt
+echo Simulation="http://itch.io/games/genre-simulation/price-free.xml" >> types.txt
+echo Strategy="http://itch.io/games/genre-strategy/price-free.xml" >> types.txt
+echo Other="http://itch.io/games/genre-other/price-free.xml" >> types.txt
+echo Puzzle="http://itch.io/games/genre-puzzle/price-free.xml" >> types.txt
 
 # Browser Variable to Global
 Browser=$2
@@ -80,15 +79,22 @@ function echosucc {
 function randomGame() {
   local f=$1
   rm -f database_raw.txt
-  wget -q -O database_raw.txt $(cat types.txt | grep $f | sed "s/^$f\=//")
 
+  # Check if the genre even exists
+  $(cat types.txt | grep $f | sed "s/^$f\=//")
+  if [ -n $(cat types.txt | grep $f | sed "s/^$f\=//") ]; then
+    wget -q -O database_raw.txt $(cat types.txt | grep $f | sed "s/^$f\=//")
+  else
+    echo "This genre does not exist!"
+    exit
+  fi
 
   # XML Prettifier - Works perfectly!
   FILE_SIZE=$(du -k database_raw.txt | cut -f1)
   TMPNAME=$(basename $0)-$(basename database_raw.txt)
   TMPFILE=$(mktemp $TMPNAME.XXX) || exit 1
 
-  echo "Prettifying itch.io's API: $INPUT_FILE ($FILE_SIZE Kbytes)..."
+  echo "Here are the games we can choose from in this genre:"
   xmllint --format database_raw.txt --output $TMPFILE
   mv $TMPFILE database_raw.txt
 
@@ -102,6 +108,7 @@ function randomGame() {
   # Now grab the Game($elementNumber)
   gameID=$(awk "NR==$elementNumber" database_parsed.txt)
   # Then call openGameInBrowser(url)
+  # UNCOMMENT BELOW TO OPEN BROWSER!
   # openGameInBrowser($url);
   echo -e YOUR GAME IS: $gameID
 }
