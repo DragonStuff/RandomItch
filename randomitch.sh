@@ -8,7 +8,7 @@
 #
 
 ####  CONSTANTS  ####
-USAGE="Usage: ./randomitch.sh [-q] [genre] [browser]\n  Standard Genres: Free/Newest/Featured/\n  Specific Genres: Action/Platformer/Shooter/Adventure/RPG/Simulation/Strategy/Other/Puzzle\n"
+USAGE="Usage: ./randomitch.sh [genre] [browser]\n  Standard Genres: Free/Newest\n  Specific Genres: Action/Platformer/Shooter/Adventure/RPG/Simulation/Strategy/Other/Puzzle\n"
 
 ####    FLAGS    ####
 #All flags are = 0 for on
@@ -81,8 +81,7 @@ function randomGame() {
   rm -f database_raw.txt
 
   # Check if the genre even exists
-  $(cat types.txt | grep $f | sed "s/^$f\=//")
-  if [ -n $(cat types.txt | grep $f | sed "s/^$f\=//") ]; then
+  if [ -n "$(cat types.txt | grep $f | sed 's/^$f\=//')" ]; then
     wget -q -O database_raw.txt $(cat types.txt | grep $f | sed "s/^$f\=//")
   else
     echo "This genre does not exist!"
